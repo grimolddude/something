@@ -1,0 +1,37 @@
+########################### NETWORKS
+networks:
+  default:
+    driver: bridge
+  socket_proxy:
+    name: socket_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.66.0/25
+  t3_proxy:
+    name: t3_proxy
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.90.0/25
+
+
+
+########################### SECRETS
+secrets:
+  basic_auth_credentials:
+    file: /root/docker/secrets/basic_auth_credentials
+  cf_dns_api_token:
+    file: /root/docker/secrets/cf_dns_api_token
+
+
+
+
+include:
+  ########################### SERVICES
+  # PREFIX udms = Ultimate Docker Media Server
+  # HOSTNAME=udms - defined in .env
+ 
+  # CORE
+  - /root/docker/compose/socket-proxy/socket-proxy.yml
+  - /root/docker/compose/traefik/docker-compose-traefik.yml
