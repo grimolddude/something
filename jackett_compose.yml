@@ -1,0 +1,63 @@
+---
+version: "3"
+networks:
+  net_jackett: null
+volumes:
+  vol_nginx:
+    driver: local
+    driver_opts:
+      type: none
+      device: /opt/docker/nginx/run
+      o: bind
+  vol_jackett:
+    driver: local
+    driver_opts:
+      type: none
+      device: /opt/docker/jackett/run
+      o: bind
+services:
+  app:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 81:81
+      - 443:443
+    volumes:
+      - vol_nginx:/data
+    networks:
+      net_jackett: null
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+  jackett:
+    image: linuxserver/jackett
+    container_name: jackett
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Australia/Adelaide
+      - AUTO_UPDATE=true
+      - RUN_OPTS=run options here
+    volumes:
+      - vol_jackett:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/timezone:/etc/timezone:ro
+    ports:
+      - 9117:9117
+    networks:
+      net_jackett: null
+#      - t3_proxy
+#      - socket_proxy
+    restart: always
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - "traefik.enable=true"
+      # HTTP Routers
+      - "traefik.http.routers.jackett-rtr.entrypoints=websecure"
+      - "traefik.http.routers.jackett-rtr.rule=Host(`jackett.nothingtoseehere.pw`)"
+      # Middlewares
+      - "traefik.http.routers.jackett-rtr.middlewares=chain-no-auth@file"
+      # HTTP Services
+      - "traefik.http.routers.jackett-rtr.service=portainer-svc"
+      - "traefik.http.services.jackett-svc.loadbalancer.server.port=9117"
